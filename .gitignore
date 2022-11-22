@@ -1,0 +1,11 @@
+# IDE directory's
+.vscode/
+.idea/
+
+# Python file
+__pycache__/
+venv/
+
+# Encrypter ignores
+saves/
+!saves/readme.md
