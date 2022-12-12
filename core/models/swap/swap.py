@@ -12,6 +12,9 @@ from core.helpers.scrambler import scrambler
 
 
 class swapSetting(Enum):
+    """
+    Settings for the swap model
+    """
     reverse = 0
     random = 1
     sectionReverse = 2
@@ -21,17 +24,22 @@ class swapSetting(Enum):
 @dataclass
 class swap(baseModel):
     # Vars for the inherited model class
-    name: str = field(default='swap', init=False)
+    name: str = field(default='model.swap', init=False)
     type: typeInput = field(default=typeInput.all, init=False)
 
+    # Model specific settings
     setting: swapSetting = field(default=swapSetting.reverse)
     reverse_amount: int = field(default=1)
     section_amount: int = field(default=1)
     scrambler: 'scrambler' = field(default=None)
 
+    # Internal variables, are not exported
     __encrypt_toggle: bool = field(default=True, init=False)
 
     def __post_init__(self):
+        # Update the id when the object constructor is called
+        self.update_id()
+
         if self.setting in [swapSetting.reverse, swapSetting.random] and self.section_amount != 1:
             warn("Setting the section_amount while not using a section setting will not change the output",
                  SyntaxWarning)

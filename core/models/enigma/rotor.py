@@ -15,7 +15,7 @@ class enigmaRotor(baseHelper):
     Superclass vars
     """
     # Vars for the inherited model class
-    name: str = field(default='enigma.enigmaRotor', init=False)
+    name: str = field(default='model.enigma.enigmaRotor', init=False)
     type: typeInput = field(default=typeInput.char, init=False)
 
     rotorSize: int = field(default=0)
@@ -29,10 +29,15 @@ class enigmaRotor(baseHelper):
     __init_rotorPosition: int = field(init=False, repr=False)
 
     def __post_init__(self):
+        # Update the id when the object constructor is called
+        self.update_id()
+
         self.rotor = list(range(self.rotorSize))
 
         if isinstance(self.scrambler, scrambler):
             self.rotor = self.scrambler.scramble(self.rotor)
+        elif self.scrambler is not None:
+            raise AttributeError(f"given scrambler is of unknown type '{type(self.scrambler)}'")
 
         if self.rotorOffset != 0:
             if abs(self.rotorOffset) > self.rotorSize:

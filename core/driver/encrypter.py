@@ -19,7 +19,11 @@ class encrypter:
         return True
 
     @staticmethod
-    def __hidden_encrypt(content: str, model: baseModel, function: Callable[[baseModel, str], str]) -> str:
+    def __hidden_encrypt(
+            content: str,
+            model: baseModel,
+            function: Callable[[baseModel, Union[str, int]], str]
+    ) -> str:
         new_content = ''
         if model.type == typeInput.char:
             for letter in content:
@@ -33,13 +37,13 @@ class encrypter:
     def encrypt(self, content: str) -> str:
         for model in self.models:
             content = self.__hidden_encrypt(content, model, lambda m, c: m.encrypt(c))
-            model.reset()
+            model.reset(after_encryption=True)
         return content
 
     def decrypt(self, content: str) -> str:
         for model in reversed(self.models):
             content = self.__hidden_encrypt(content, model, lambda m, c: m.decrypt(c))
-            model.reset()
+            model.reset(after_encryption=False)
         return content
 
     def __export__(self) -> List[Any]:

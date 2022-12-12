@@ -23,7 +23,7 @@ class asciiSetting(Enum):
 @dataclass
 class ascii_scope(baseHelper):
     # Vars for the inherited model class
-    name: str = field(default='ascii_scope', init=False)
+    name: str = field(default='helpers.ascii_scope', init=False)
 
     # Setting which the model follows
     setting: asciiSetting = field(default=asciiSetting.full)
@@ -33,6 +33,9 @@ class ascii_scope(baseHelper):
     scope: List[str] = field(default_factory=list, init=False)
 
     def __post_init__(self):
+        # Update the id when the object constructor is called
+        self.update_id()
+
         if self.setting in (asciiSetting.lettersAll, asciiSetting.lettersLower, asciiSetting.lettersHigher):
             def check_func(char):
                 return char.isalpha()

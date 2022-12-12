@@ -38,7 +38,7 @@ class exporter:
             for filename in model_files[dir_path]:
                 file_content = importlib.import_module(py_dir_path + '.' + filename.split('.')[0])
                 try:
-                    moduleID: str = file_content.MAIN_MODULE().getID()
+                    moduleID: str = file_content.MAIN_MODULE().id
                     self.model_files[moduleID] = file_content
                 except AttributeError:
                     print(f"File "

@@ -17,12 +17,15 @@ class scrambleSetting(Enum):
 @dataclass
 class scrambler(baseHelper):
     # Vars for the inherited model class
-    name: str = field(default='scrambler', init=False)
+    name: str = field(default='helper.scrambler', init=False)
 
     setting: scrambleSetting = field(default=scrambleSetting.randomSeed)
     seed: int = field(default=0)
 
     def __post_init__(self):
+        # Update the id when the object constructor is called
+        self.update_id()
+
         if self.setting == scrambleSetting.randomSeed:
             self.seed = time.time_ns()
 

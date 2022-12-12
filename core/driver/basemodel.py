@@ -2,10 +2,13 @@
 from enum import Enum
 from hashlib import md5
 from dataclasses import dataclass, field
-from typing import List, Any, Union, Dict
+from typing import List, Any, Union, Dict, NoReturn
 
 
 class typeInput(Enum):
+    """
+    Length of input the model wants
+    """
     char = 0
     all = 1
     other = 2
@@ -14,13 +17,26 @@ class typeInput(Enum):
 @dataclass
 class base:
     """
-    Base class.
-    When using this class as base you will have the following support:
-    1. If used correctly, automatic support for exporting and importing your model
-    2. Model can be added to the encrypter class
+    Base class for manipulating/helping to manipulate data
+    When deriving from this class you can use the following 2 functions:
+    1. Exporting and importing models
+    2. Can be used as addition to the encrypter models
     """
+    # Name of the model. Should be unique, but can be avoided by using a different nonce
     name: str
+
+    # Number only used once. Put a random value in here so that it
     nonce: int = field(init=False, default=0)
+
+    # Identifier of a base.
+    id: str = field(default=None, init=False)
+
+    def __post_init__(self) -> NoReturn:
+        """
+        Fallback for if __post_init__ is not defined.
+        This will only update the id with the update_id() function
+        """
+        self.update_id()
 
     def __export__(self) -> List[Any]:
         """
@@ -30,59 +46,77 @@ class base:
         """
         raise TypeError("This model can't be exported")
 
-
-@dataclass
-class baseHelper(base):
-    def getID(self) -> str:
+    def update_id(self) -> NoReturn:
         """
         Get the ID of model by returning hash of key attributes
         :return: (HEX) Hash (md5) in string format
         """
-        attributes = [self.name, str(self.nonce)]
-        return md5("".join(attributes).encode('utf-8')).hexdigest()
+        combined_values = "".join(
+            [self.name, str(self.nonce)]
+        ).encode('utf-8')
+        self.id = md5(combined_values).hexdigest()
+
+
+@dataclass
+class baseHelper(base):
+    """
+    baseHelper defines a class that can help a model perform tasks but shouldn't be used in itself as a model.
+    """
+    pass
 
 
 @dataclass
 class baseModel(base):
+    """
+    baseModel defines a base for a model which can encrypt and decrypt data. The type of input data is defined here
+    so the encrypter wrapper class knows how to feed the model correctly.
+    """
     type: typeInput
 
-    def encrypt(self, content: str) -> str:
+    def update_id(self) -> NoReturn:
+        """
+        Redefine the function so that it includes the typeInput variable
+        ================================================================
+        Get the ID of model by returning hash of key attributes
+        :return: (HEX) Hash (md5) in string format
+        """
+        combined_values = "".join(
+            [self.name, str(self.nonce), str(typeInput)]
+        ).encode('utf-8')
+        self.id = md5(combined_values).hexdigest()
+
+    def encrypt(self, content: bytes) -> bytes:
         """
         Encrypt the input that is given
-        :param content: string you want encrypted
+        :param content: bytes you want encrypted
         :return: encrypted input
         """
         raise TypeError("This model isn't capable to encrypt")
 
-    def decrypt(self, content: str) -> str:
+    def decrypt(self, content: bytes) -> bytes:
         """
         Decrypt the input that is given
-        :param content: string you want decrypted
+        :param content: bytes you want decrypted
         :return: decrypted input
         """
         raise TypeError("This model isn't capable to decrypt")
 
-    def getID(self) -> str:
-        """
-        Get the ID of model by returning hash of key attributes
-        :return: (HEX) Hash (md5) in string format
-        """
-        attributes = [self.name, str(self.type), str(self.nonce)]
-        return md5("".join(attributes).encode('utf-8')).hexdigest()
-
-    def reset(self) -> bool:
+    def reset(self, after_encryption: bool) -> None:
         """
         Reset the model. Define if needed. Will be called after every encrypt or decrypt call
-        :return:
+        :param after_encryption: If the reset call has been done after the encrypt() function
         """
         pass
 
 
 def export_model(model: base) -> Union[Dict[str, Any], None]:
+    """
+    Function for exporting a model. Only should be used with the __export__() function
+    :param model: model to export
+    :return: Dict with ID and Attributes
+    """
     if model is None:
         return None
-    return {'id': model.getID(), 'attributes': model.__export__()}
+    return {'id': model.id, 'attributes': model.__export__()}
 
 
-def attr_types(model: base) -> List[type]:
-    return [type(attr) for attr in model.__export__()]

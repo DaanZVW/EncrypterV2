@@ -9,14 +9,13 @@ from core.driver.basemodel import baseModel, typeInput, export_model
 from core.models.enigma import enigmaRotor
 
 # Helpers
-from core.helpers.scrambler import scrambler, scrambleSetting
 from core.helpers.ascii_scope import ascii_scope, asciiSetting
 
 
 @dataclass
 class enigma(baseModel):
     # Vars for the inherited model class
-    name: str = field(default='Enigma', init=False)
+    name: str = field(default='model.enigma.enigma', init=False)
     type: typeInput = field(default=typeInput.char, init=False)
 
     ascii_scope: 'ascii_scope' = field(default_factory=lambda: ascii_scope(asciiSetting.printable))
@@ -51,7 +50,7 @@ class enigma(baseModel):
     def decrypt(self, content: str) -> str:
         return self.__hidden_enigma(content, lambda rotor, index: rotor.getPositionReverse(index))
 
-    def reset(self) -> None:
+    def reset(self, after_encryption: bool) -> None:
         for rotor in self.rotors:
             rotor.reset()
 
