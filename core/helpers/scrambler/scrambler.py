@@ -10,12 +10,25 @@ from core.driver.basemodel import baseHelper
 
 
 class scrambleSetting(Enum):
+    """
+    Setting for the scrambler helper
+    """
     customSeed = 0
     randomSeed = 1
 
 
 @dataclass
 class scrambler(baseHelper):
+    """
+    Helper for scrambling given characters
+
+
+    shift_amount:
+        Description: How many shifts a char will be encrypted with
+        Type       : int
+        Default    : 0
+        NOTE       : Can be positive and negative
+    """
     # Vars for the inherited model class
     name: str = field(default='helper.scrambler', init=False)
 
@@ -51,3 +64,11 @@ class scrambler(baseHelper):
 # Standard model variables
 MAIN_MODULE = scrambler
 MODULE_ATTRIBUTES = [scrambleSetting, int]
+
+if __name__ == '__main__':
+    a = bytearray(b'dit is een test')
+    b = scrambler(scrambleSetting.randomSeed).scramble(
+        a
+    )
+
+    print(a, b)
