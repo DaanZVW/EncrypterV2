@@ -43,11 +43,8 @@ class shift(baseModel):
 
     def __post_init__(self):
         """
-        Function that should be used for checking the variables
+        Function that should be used for checking the validity of the variables
         """
-        # Update the id when the object constructor is called
-        self.update_id()
-
         # Check the ascii_scope variable
         if not isinstance(self.ascii_scope, ascii_scope):
             raise TypeError("Ascii_scope is not of type ascii_type")
@@ -58,6 +55,9 @@ class shift(baseModel):
                 raise TypeError(f'scramble_scope variable is of incorrect type: {self.scrambler}')
 
             self.ascii_scope.scope = self.scrambler.scramble(self.ascii_scope.scope)
+
+        # Update the id when the object constructor is called
+        self.update_id()
 
     def __hidden_shift(self, content: str, amount: int) -> str:
         """

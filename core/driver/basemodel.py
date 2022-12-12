@@ -25,7 +25,7 @@ class base:
     # Name of the model. Should be unique, but can be avoided by using a different nonce
     name: str
 
-    # Number only used once. Put a random value in here so that it
+    # Number only used once. This helps to keep a model identifiable when exported.
     nonce: int = field(init=False, default=0)
 
     # Identifier of a base.
