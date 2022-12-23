@@ -32,22 +32,19 @@ class enigma(baseModel):
             if rotor.advanceRotor():
                 break
 
-    def __hidden_enigma(self, content: str, rotor_func) -> str:
-        if len(content) > 1:
-            raise TypeError("to many chars")
-
+    def __hidden_enigma(self, content: bytes, rotor_func) -> bytes:
         self.advanceRotors()
 
-        index = self.ascii_scope.getIndex(content)
+        index = self.ascii_scope.get_index(content)
         for rotor in list(reversed(self.rotors)) + self.rotors[1:]:
             index = rotor_func(rotor, index)
 
-        return self.ascii_scope.scope[index]
+        return self.ascii_scope.scope[index].to_bytes(1, 'little')
 
-    def encrypt(self, content: str) -> str:
+    def encrypt(self, content: bytes) -> bytes:
         return self.__hidden_enigma(content, lambda rotor, index: rotor.getPosition(index))
 
-    def decrypt(self, content: str) -> str:
+    def decrypt(self, content: bytes) -> bytes:
         return self.__hidden_enigma(content, lambda rotor, index: rotor.getPositionReverse(index))
 
     def reset(self, after_encryption: bool) -> None:
@@ -65,37 +62,3 @@ class enigma(baseModel):
 MAIN_MODULE = enigma
 MODULE_ATTRIBUTES = [ascii_scope, enigmaRotor]
 
-
-if __name__ == '__main__':
-    eni = enigma(
-        ascii_scope(asciiSetting.lettersLower, extra_scope_chars=None)
-    )
-
-    # msg = 'hallo'
-    msg = 'abcdefghijklmnopqrstuvwxyz'
-
-    enc = ''
-    for char in msg:
-        enc += eni.encrypt(char)
-
-    eni.reset()
-    eni.advanceRotors()
-
-    enc2 = ''
-    for char in msg:
-        enc2 += eni.encrypt(char)
-
-    eni.reset()
-
-    dec = ''
-    for char in enc:
-        dec += eni.decrypt(char)
-
-    eni.reset()
-    eni.advanceRotors()
-
-    dec2 = ''
-    for char in enc2:
-        dec2 += eni.decrypt(char)
-
-    print(msg, enc, enc2, dec, dec2, sep='\n')

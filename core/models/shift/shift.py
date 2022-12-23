@@ -59,7 +59,7 @@ class shift(baseModel):
         # Update the id when the object constructor is called
         self.update_id()
 
-    def __hidden_shift(self, content: str, amount: int) -> str:
+    def __hidden_shift(self, content: bytes, amount: int) -> bytes:
         """
         Internal shift function
         :param content: Char to shift
@@ -67,7 +67,7 @@ class shift(baseModel):
         :return: Encrypted char
         """
         # Index the char of the ascii_scope
-        index = self.ascii_scope.getIndex(content)
+        index = self.ascii_scope.get_index(content)
 
         # Make sure that the shift amount is within the length of the ascii_scope
         length_scope = len(self.ascii_scope.scope)
@@ -80,9 +80,9 @@ class shift(baseModel):
             move -= length_scope
 
         # Return the encrypted char
-        return self.ascii_scope.scope[move]
+        return self.ascii_scope.scope[move].to_bytes(1, 'little')
 
-    def encrypt(self, content: str) -> str:
+    def encrypt(self, content: bytes) -> bytes:
         """
         Encrypt the input that is given
         :param content: string you want encrypted
@@ -90,7 +90,7 @@ class shift(baseModel):
         """
         return self.__hidden_shift(content, self.shift_amount)
 
-    def decrypt(self, content: str) -> str:
+    def decrypt(self, content: bytes) -> bytes:
         """
         Decrypt the input that is given
         :param content: string you want decrypted

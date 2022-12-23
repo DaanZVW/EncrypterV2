@@ -1,8 +1,23 @@
 # Library's
 from enum import Enum
-from hashlib import md5
+from hashlib import sha1
+from base64 import urlsafe_b64encode
 from dataclasses import dataclass, field
 from typing import List, Any, Union, Dict, NoReturn
+
+
+def id_algorithm(str_input: str) -> bytes:
+    """
+    Get an identifier hash of a given input
+    :param str_input: Input that needs to be hashed
+    :return: Hashed input
+    """
+    if isinstance(str_input, str):
+        str_input = str_input.encode('utf-8')
+
+    return urlsafe_b64encode(
+        sha1(str_input).digest()
+    )
 
 
 class typeInput(Enum):
@@ -29,7 +44,7 @@ class base:
     nonce: int = field(init=False, default=0)
 
     # Identifier of a base.
-    id: str = field(default=None, init=False)
+    id: bytes = field(default=None, init=False)
 
     def __post_init__(self) -> NoReturn:
         """
@@ -51,10 +66,7 @@ class base:
         Get the ID of model by returning hash of key attributes
         :return: (HEX) Hash (md5) in string format
         """
-        combined_values = "".join(
-            [self.name, str(self.nonce)]
-        ).encode('utf-8')
-        self.id = md5(combined_values).hexdigest()
+        self.id = id_algorithm(self.name + str(self.nonce))
 
 
 @dataclass
@@ -80,10 +92,7 @@ class baseModel(base):
         Get the ID of model by returning hash of key attributes
         :return: (HEX) Hash (md5) in string format
         """
-        combined_values = "".join(
-            [self.name, str(self.nonce), str(typeInput)]
-        ).encode('utf-8')
-        self.id = md5(combined_values).hexdigest()
+        self.id = id_algorithm(self.name + str(self.nonce) + str(typeInput))
 
     def encrypt(self, content: bytes) -> bytes:
         """

@@ -86,7 +86,7 @@ class swap(baseModel):
         # Update the id when the object constructor is called
         self.update_id()
 
-    def __reverse_swap(self, data: List[str]) -> List[str]:
+    def __reverse_swap(self, data: bytearray) -> bytearray:
         """
         Internal function for reversing incoming data
         :param data: The data
@@ -98,7 +98,7 @@ class swap(baseModel):
             data[self.reverse_amount:-self.reverse_amount]
         ) + data[:self.reverse_amount]
 
-    def __scramble_swap(self, data: List[str]) -> List[str]:
+    def __scramble_swap(self, data: bytearray) -> bytearray:
         """
         Internal function for scrambling the data (setting random)
         :param data: The data
@@ -108,7 +108,7 @@ class swap(baseModel):
             return self.scrambler.scramble(data)
         return self.scrambler.unscramble(data)
 
-    def __section_swap(self, data: List[str], function: Callable[[List[str]], List[str]]) -> List[str]:
+    def __section_swap(self, data: bytearray, function: Callable[[bytearray], bytearray]) -> bytearray:
         """
         Function for using a function over multiple sections of the given data
         :param data: The data
@@ -119,26 +119,23 @@ class swap(baseModel):
             return data
         return function(data[:self.section_amount]) + self.__section_swap(data[self.section_amount:], function)
 
-    def encrypt(self, content: str) -> str:
+    def encrypt(self, content: bytearray) -> bytearray:
         """
         Encrypt the input that is given
         :param content: string you want encrypted
         :return: encrypted input
         """
-        self.__encrypt_toggle = True
-
-        content = list(content)
         if self.setting == swapSetting.reverse:
-            content = self.__reverse_swap(content)
+            return self.__reverse_swap(content)
         elif self.setting == swapSetting.random:
-            content = self.__scramble_swap(content)
+            return self.__scramble_swap(content)
         elif self.setting == swapSetting.sectionReverse:
-            content = self.__section_swap(content, lambda x: self.__reverse_swap(x))
+            return self.__section_swap(content, lambda x: self.__reverse_swap(x))
         elif self.setting == swapSetting.sectionRandom:
-            content = self.__section_swap(content, lambda x: self.__scramble_swap(x))
-        return "".join(content)
+            return self.__section_swap(content, lambda x: self.__scramble_swap(x))
+        raise TypeError(f'swapSetting {self.setting} is not supported')
 
-    def decrypt(self, content: str) -> str:
+    def decrypt(self, content: bytearray) -> bytearray:
         """
         Decrypt the input that is given
         :param content: string you want decrypted
@@ -167,3 +164,9 @@ class swap(baseModel):
 MAIN_MODULE = swap
 MODULE_ATTRIBUTES = [swapSetting, int, int, scrambler]
 
+
+if __name__ == '__main__':
+    a = swap(swapSetting.sectionReverse, reverse_amount=2, section_amount=3, scrambler=scrambler())
+
+    b = bytearray(b'bytearray')
+    print(a.encrypt(b))

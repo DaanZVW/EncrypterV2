@@ -31,15 +31,17 @@ if __name__ == '__main__':
         swap(swapSetting.reverse, 5)
     )
 
-    msg = 'This is a test message which should be encrypted and decrypted correctly'
+    msg = bytearray(b'This is a test message which should be encrypted and decrypted correctly')
     a = encrypt.encrypt(msg)
-    print(a.encode('utf-8'))
-
-    export = exporter()
-    export.exportEncrypter(encrypt, 'test', overwrite=True)
-    n_encrypt = export.importEncrypter('test')
-
-    a = n_encrypt.decrypt(a)
     print(a)
+    b = encrypt.decrypt(a)
+    print(b)
+
+    # export = exporter()
+    # export.exportEncrypter(encrypt, 'test', overwrite=True)
+    # n_encrypt = export.importEncrypter('test')
+    #
+    # a = n_encrypt.decrypt(a)
+    # print(a)
 
 

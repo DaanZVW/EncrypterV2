@@ -24,7 +24,7 @@ class enigmaRotor(baseHelper):
 
     scrambler: 'scrambler' = field(default=None)
 
-    rotor: List[int] = field(default_factory=list, init=False)
+    rotor: bytearray = field(init=False)
 
     __init_rotorPosition: int = field(init=False, repr=False)
 
@@ -32,7 +32,7 @@ class enigmaRotor(baseHelper):
         # Update the id when the object constructor is called
         self.update_id()
 
-        self.rotor = list(range(self.rotorSize))
+        self.rotor = bytearray(range(self.rotorSize))
 
         if isinstance(self.scrambler, scrambler):
             self.rotor = self.scrambler.scramble(self.rotor)
@@ -76,28 +76,4 @@ class enigmaRotor(baseHelper):
 # Standard model variables
 MAIN_MODULE = enigmaRotor
 MODULE_ATTRIBUTES = [int, int, int, scrambler]
-
-
-if __name__ == '__main__':
-    rotorSize = 5
-    a = enigmaRotor(
-        rotorSize=rotorSize,
-        rotorOffset=0,
-        rotorPosition=0,
-        scrambler=scrambler(scrambleSetting.customSeed, 4)
-    )
-    print(a)
-
-    for i in range(rotorSize):
-        result = a.getPosition(i)
-        print(i, end=' ')
-        print(result, end=' ')
-        print(a.getPositionReverse(result))
-    print()
-
-    print(a.advanceRotor())
-    print(a.getPosition(0))
-    print(a.reset())
-    print(a.getPosition(0))
-
 
