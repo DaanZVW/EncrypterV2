@@ -3,7 +3,8 @@ from typing import List, Any
 from dataclasses import dataclass, field
 
 # Drivers
-from core.driver.basemodel import baseModel, typeInput, export_model
+from core.driver.basemodel import baseModel, typeInput
+from core.driver.encoder import export_model, import_model
 
 # Helpers
 from core.helpers.scrambler import scrambler
@@ -98,17 +99,26 @@ class shift(baseModel):
         """
         return self.__hidden_shift(content, -self.shift_amount)
 
-    def __export__(self) -> List[Any]:
+    @staticmethod
+    def __export__(model: 'shift') -> List[Any]:
         """
         Custom magic method for exporting models
         Return all the variables needed to recreate the model
         :return: List with values for init
         """
         return [
-            self.shift_amount,
-            export_model(self.ascii_scope),
-            export_model(self.scrambler)
+            model.shift_amount,
+            export_model(model.ascii_scope),
+            export_model(model.scrambler)
         ]
+
+    @staticmethod
+    def __import__(attributes: Any) -> 'shift':
+        return shift(
+            shift_amount=attributes[0],
+            ascii_scope=import_model(attributes[1]),
+            scrambler=import_model(attributes[2])
+        )
 
 
 # Standard model variables

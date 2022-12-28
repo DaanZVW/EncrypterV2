@@ -63,14 +63,19 @@ class ascii_scope(baseHelper):
         except ValueError:
             raise ValueError(f"Given character '{char}' does not fit the scope '{self.setting}'")
 
-    def __export__(self) -> List[Any]:
+    @staticmethod
+    def __export__(model: 'ascii_scope') -> List[Any]:
         return [
-            self.setting.value,
-            self.extra_scope_chars
+            model.setting.value,
+            model.extra_scope_chars.decode('utf-8')
         ]
 
-    def __len__(self):
-        return len(self.scope)
+    @staticmethod
+    def __import__(attributes: Any) -> 'ascii_scope':
+        return ascii_scope(
+            setting=asciiSetting(attributes[0]),
+            extra_scope_chars=attributes[1].encode('utf-8')
+        )
 
 
 # Standard model variables

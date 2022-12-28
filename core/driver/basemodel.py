@@ -3,7 +3,7 @@ from enum import Enum
 from hashlib import sha1
 from base64 import urlsafe_b64encode
 from dataclasses import dataclass, field
-from typing import List, Any, Union, Dict, NoReturn
+from typing import List, Any, NoReturn
 
 
 def id_algorithm(str_input: str) -> bytes:
@@ -53,20 +53,31 @@ class base:
         """
         self.update_id()
 
-    def __export__(self) -> List[Any]:
-        """
-        Custom magic method for exporting models
-        Return all the variables needed to recreate the model
-        :return: List with values for init
-        """
-        raise TypeError("This model can't be exported")
-
     def update_id(self) -> NoReturn:
         """
         Get the ID of model by returning hash of key attributes
         :return: (HEX) Hash (md5) in string format
         """
         self.id = id_algorithm(self.name + str(self.nonce))
+
+    @staticmethod
+    def __export__(model: 'base') -> List[Any]:
+        """
+        Magic method for exporting models
+        Return all the variables needed to recreate the model
+        :return: List with values for init
+        """
+        raise TypeError("This model can't be exported")
+
+    @staticmethod
+    def __import__(attributes: Any) -> 'base':
+        """
+        Magic method for importing models
+        Initialize the model with the given attributes
+        :return: Initialized model
+        """
+        print(attributes)
+        raise TypeError("This model can't be imported")
 
 
 @dataclass
@@ -116,16 +127,5 @@ class baseModel(base):
         :param after_encryption: If the reset call has been done after the encrypt() function
         """
         pass
-
-
-def export_model(model: base) -> Union[Dict[str, Any], None]:
-    """
-    Function for exporting a model. Only should be used with the __export__() function
-    :param model: model to export
-    :return: Dict with ID and Attributes
-    """
-    if model is None:
-        return None
-    return {'id': model.id, 'attributes': model.__export__()}
 
 
