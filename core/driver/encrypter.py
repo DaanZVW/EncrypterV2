@@ -1,10 +1,9 @@
 # Library's
-from dataclasses import dataclass, field
-from typing import List, Callable, Any, Union
+from dataclasses import dataclass
+from typing import List, Callable, Union
 
 # Drivers
 from core.driver.basemodel import baseModel, typeInput
-from core.driver.encoder import export_model, import_model
 
 
 @dataclass
@@ -56,14 +55,6 @@ class encrypter:
             content = self.__hidden_encrypt(content, model, lambda m, c: m.decrypt(c))
             model.reset(after_encryption=False)
         return bytes(content)
-
-    def export_encrypter(self) -> List[Any]:
-        return [export_model(model) for model in self.models]
-
-    def import_encrypter(self, models: List[Any]) -> bool:
-        for model in models:
-            self.addModel(import_model(model))
-        return True
 
     def __repr__(self) -> str:
         model_info = [model.__repr__() for model in self.models]

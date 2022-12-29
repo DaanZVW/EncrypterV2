@@ -1,7 +1,5 @@
 # Libraries
-import json
-from dataclasses import dataclass
-from typing import Dict, AnyStr, Any, List, Type
+from typing import Dict, Any, Type
 
 # Drivers
 from core.driver.basemodel import base
@@ -65,37 +63,4 @@ def import_model(attributes: Any):
     if not issubclass(type(decoded_obj), base):
         raise TypeError('given model is not a encrypter model')
     return decoded_obj
-
-
-class EncrypterEncoder(json.JSONEncoder):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def default(self, obj: Any) -> List[AnyStr]:
-        try:
-            exported_model = export_model(obj)
-        except TypeError:
-            return json.JSONEncoder.default(self, obj)
-        else:
-            return exported_model
-
-
-@dataclass
-class EncrypterDecoder(json.JSONDecoder):
-    def __init__(self, **kwargs):
-        kwargs["object_hook"] = self.object_hook
-        super().__init__(**kwargs)
-
-    def object_hook(self, obj: Dict[AnyStr, Any]) -> Dict[AnyStr, Any]:
-        try:
-            models = obj['models']
-        except KeyError:
-            return super().object_hook(obj)
-
-        for i, model in enumerate(models):
-            models[i] = import_model(model)
-
-        return obj
-
-
 

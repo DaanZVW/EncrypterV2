@@ -31,9 +31,10 @@ if __name__ == '__main__':
         swap(swapSetting.reverse, 5)
     )
 
-    msg = bytearray(b'This is a test message which should be encrypted and decrypted correctly')
+    msg = b'This is a test message which should be encrypted and decrypted correctly'
+    print(msg, '\n')
     a = encrypt.encrypt(msg)
-    print(a)
+    print(a, '\n')
     b = encrypt.decrypt(a)
     print(b)
 
@@ -42,12 +43,13 @@ if __name__ == '__main__':
         r'core\helpers',
         r'core\models'
     )
+    export.set_file_path(r'saves\berend.json')
 
-    encrypt2 = encrypter()
-    encrypt2.import_encrypter(
-        encrypt.export_encrypter()
-    )
+    export.export_encrypter(encrypt)
+    encrypt2 = export.import_encrypter()
 
-    print(encrypt == encrypt2)
+    # print(encrypt2.encrypt(msg) == a)
+    #
+    # print(encrypt == encrypt2)
 
 
