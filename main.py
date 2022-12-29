@@ -37,11 +37,17 @@ if __name__ == '__main__':
     b = encrypt.decrypt(a)
     print(b)
 
-    # export = exporter()
-    # export.exportEncrypter(encrypt, 'test', overwrite=True)
-    # n_encrypt = export.importEncrypter('test')
-    #
-    # a = n_encrypt.decrypt(a)
-    # print(a)
+    export = exporter(
+        r'saves',
+        r'core\helpers',
+        r'core\models'
+    )
+
+    encrypt2 = encrypter()
+    encrypt2.import_encrypter(
+        encrypt.export_encrypter()
+    )
+
+    print(encrypt == encrypt2)
 
 

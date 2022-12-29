@@ -3,7 +3,8 @@ from dataclasses import dataclass, field
 from typing import List, Any
 
 # Drivers
-from core.driver.basemodel import baseModel, typeInput, export_model
+from core.driver.encoder import export_model, import_model
+from core.driver.basemodel import baseModel, typeInput
 
 # Models
 from core.models.enigma import enigmaRotor
@@ -51,14 +52,22 @@ class enigma(baseModel):
         for rotor in self.rotors:
             rotor.reset()
 
-    def __export__(self) -> List[Any]:
+    @staticmethod
+    def __export__(model: 'enigma') -> List[Any]:
         return [
-            export_model(self.ascii_scope),
-            [export_model(rotor) for rotor in self.rotors]
+            export_model(model.ascii_scope),
+            [export_model(rotor) for rotor in model.rotors]
         ]
+
+    @staticmethod
+    def __import__(attributes: List[Any]) -> 'enigma':
+        return enigma(
+            ascii_scope=import_model(attributes[0]),
+            rotors=[import_model(attrs) for attrs in attributes[1]]
+        )
 
 
 # Standard model variables
 MAIN_MODULE = enigma
-MODULE_ATTRIBUTES = [ascii_scope, enigmaRotor]
+
 

@@ -37,11 +37,10 @@ class scrambler(baseHelper):
     seed: int = field(default=0)
 
     def __post_init__(self):
-        # Update the id when the object constructor is called
-        self.update_id()
-
         if self.setting == scrambleSetting.randomSeed:
             self.seed = time.time_ns()
+
+        self.update_id()
 
     def scramble(self, unscrambled_array: bytearray) -> bytearray:
         """
@@ -66,14 +65,20 @@ class scrambler(baseHelper):
         )
         return bytearray(item[0] for item in shuffled_data)
 
-    def __export__(self) -> List[Any]:
+    @staticmethod
+    def __export__(model: 'scrambler') -> List[Any]:
         """Magic method for exporting"""
         return [
-            scrambleSetting.customSeed.value,
-            self.seed
+            model.seed
         ]
+
+    @staticmethod
+    def __import__(attributes: Any) -> 'scrambler':
+        return scrambler(
+            setting=scrambleSetting.customSeed,
+            seed=attributes[0]
+        )
 
 
 # Standard model variables
 MAIN_MODULE = scrambler
-MODULE_ATTRIBUTES = [scrambleSetting, int]

@@ -33,9 +33,6 @@ class ascii_scope(baseHelper):
     scope: bytearray = field(default_factory=bytearray, init=False)
 
     def __post_init__(self):
-        # Update the id when the object constructor is called
-        self.update_id()
-
         if self.setting in (asciiSetting.lettersAll, asciiSetting.lettersLower, asciiSetting.lettersHigher):
             def check_func(char):
                 return char.isalpha()
@@ -57,6 +54,8 @@ class ascii_scope(baseHelper):
         if self.extra_scope_chars is not None:
             self.scope += self.extra_scope_chars
 
+        self.update_id()
+
     def get_index(self, char: bytes) -> Union[bool, int]:
         try:
             return self.scope.index(char)
@@ -77,8 +76,10 @@ class ascii_scope(baseHelper):
             extra_scope_chars=attributes[1].encode('utf-8')
         )
 
+    def __len__(self):
+        return len(self.scope)
+
 
 # Standard model variables
 MAIN_MODULE = ascii_scope
-MODULE_ATTRIBUTES = [asciiSetting, list]
 

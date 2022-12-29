@@ -3,10 +3,11 @@ from typing import List, Any
 from dataclasses import dataclass, field
 
 # Drivers
-from core.driver.basemodel import baseHelper, typeInput, export_model
+from core.driver.encoder import export_model, import_model
+from core.driver.basemodel import baseHelper, typeInput
 
 # Helpers
-from core.helpers.scrambler import scrambler, scrambleSetting
+from core.helpers.scrambler import scrambler
 
 
 @dataclass
@@ -64,16 +65,25 @@ class enigmaRotor(baseHelper):
         self.rotorPosition = self.__init_rotorPosition
         self.__post_init__()
 
-    def __export__(self) -> List[Any]:
+    @staticmethod
+    def __export__(model: 'enigmaRotor') -> List[Any]:
         return [
-            self.rotorSize,
-            self.__init_rotorPosition,
-            self.rotorOffset,
-            export_model(self.scrambler)
+            model.rotorSize,
+            model.__init_rotorPosition,
+            model.rotorOffset,
+            export_model(model.scrambler)
         ]
+
+    @staticmethod
+    def __import__(attributes: List[Any]) -> 'enigmaRotor':
+        return enigmaRotor(
+            rotorSize=attributes[0],
+            rotorPosition=attributes[1],
+            rotorOffset=attributes[2],
+            scrambler=import_model(attributes[3])
+        )
 
 
 # Standard model variables
 MAIN_MODULE = enigmaRotor
-MODULE_ATTRIBUTES = [int, int, int, scrambler]
 

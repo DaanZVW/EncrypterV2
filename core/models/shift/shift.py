@@ -57,7 +57,6 @@ class shift(baseModel):
 
             self.ascii_scope.scope = self.scrambler.scramble(self.ascii_scope.scope)
 
-        # Update the id when the object constructor is called
         self.update_id()
 
     def __hidden_shift(self, content: bytes, amount: int) -> bytes:
@@ -113,7 +112,7 @@ class shift(baseModel):
         ]
 
     @staticmethod
-    def __import__(attributes: Any) -> 'shift':
+    def __import__(attributes: List[Any]) -> 'shift':
         return shift(
             shift_amount=attributes[0],
             ascii_scope=import_model(attributes[1]),
@@ -123,5 +122,4 @@ class shift(baseModel):
 
 # Standard model variables
 MAIN_MODULE = shift
-MODULE_ATTRIBUTES = [int, ascii_scope, scrambler]
 

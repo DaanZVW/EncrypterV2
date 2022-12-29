@@ -5,7 +5,8 @@ from typing import List, Callable, Any
 from dataclasses import dataclass, field
 
 # Drivers
-from core.driver.basemodel import baseModel, typeInput, export_model
+from core.driver.encoder import export_model, import_model
+from core.driver.basemodel import baseModel, typeInput
 
 # Helpers
 from core.helpers.scrambler import scrambler
@@ -146,27 +147,30 @@ class swap(baseModel):
         self.__encrypt_toggle = True
         return content
 
-    def __export__(self) -> List[Any]:
+    @staticmethod
+    def __export__(model: 'swap') -> List[Any]:
         """
         Custom magic method for exporting models
         Return all the variables needed to recreate the model
         :return: List with values for init
         """
         return [
-            self.setting.value,
-            self.reverse_amount,
-            self.section_amount,
-            export_model(self.scrambler)
+            model.setting.value,
+            model.reverse_amount,
+            model.section_amount,
+            export_model(model.scrambler)
         ]
+
+    @staticmethod
+    def __import__(attributes: List[Any]) -> 'swap':
+        return swap(
+            setting=swapSetting(attributes[0]),
+            reverse_amount=attributes[1],
+            section_amount=attributes[2],
+            scrambler=import_model(attributes[3])
+        )
 
 
 # Standard model variables
 MAIN_MODULE = swap
-MODULE_ATTRIBUTES = [swapSetting, int, int, scrambler]
 
-
-if __name__ == '__main__':
-    a = swap(swapSetting.sectionReverse, reverse_amount=2, section_amount=3, scrambler=scrambler())
-
-    b = bytearray(b'bytearray')
-    print(a.encrypt(b))

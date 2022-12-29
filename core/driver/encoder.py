@@ -39,11 +39,13 @@ def export_model(obj: base):
         encoder = type_registry[obj_id]['type'].__export__
     except AttributeError:
         raise RuntimeError(f"id '{obj_id}' not found")
-    else:
-        encoded_obj = encoder(obj)
-        if not isinstance(encoded_obj, list):
-            raise TypeError("encode_fallback didn't return a list")
-        return [obj_id] + encoder(obj)
+
+    # Here should be a try except clause
+    encoded_obj = encoder(obj)
+
+    if not isinstance(encoded_obj, list):
+        raise TypeError("encode_fallback didn't return a list")
+    return [obj_id] + encoder(obj)
 
 
 def import_model(attributes: Any):
@@ -56,11 +58,13 @@ def import_model(attributes: Any):
         decoder = type_registry[model_id]['type'].__import__
     except KeyError:
         raise TypeError(f"id {model_id} not found")
-    else:
-        decoded_obj = decoder(attributes)
-        if not issubclass(type(decoded_obj), base):
-            raise TypeError('given model is not a encrypter model')
-        return decoded_obj
+
+    # Here should be a try except clause
+    decoded_obj = decoder(attributes)
+
+    if not issubclass(type(decoded_obj), base):
+        raise TypeError('given model is not a encrypter model')
+    return decoded_obj
 
 
 class EncrypterEncoder(json.JSONEncoder):

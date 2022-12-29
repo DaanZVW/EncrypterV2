@@ -70,13 +70,12 @@ class base:
         raise TypeError("This model can't be exported")
 
     @staticmethod
-    def __import__(attributes: Any) -> 'base':
+    def __import__(attributes: List[Any]) -> 'base':
         """
         Magic method for importing models
         Initialize the model with the given attributes
         :return: Initialized model
         """
-        print(attributes)
         raise TypeError("This model can't be imported")
 
 
