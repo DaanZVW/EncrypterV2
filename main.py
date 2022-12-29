@@ -31,15 +31,25 @@ if __name__ == '__main__':
         swap(swapSetting.reverse, 5)
     )
 
-    msg = 'This is a test message which should be encrypted and decrypted correctly'
+    msg = b'This is a test message which should be encrypted and decrypted correctly'
+    print(msg, '\n')
     a = encrypt.encrypt(msg)
-    print(a.encode('utf-8'))
+    print(a, '\n')
+    b = encrypt.decrypt(a)
+    print(b)
 
-    export = exporter()
-    export.exportEncrypter(encrypt, 'test', overwrite=True)
-    n_encrypt = export.importEncrypter('test')
+    export = exporter(
+        r'saves',
+        r'core\helpers',
+        r'core\models'
+    )
+    export.set_file_path(r'saves\berend.json')
 
-    a = n_encrypt.decrypt(a)
-    print(a)
+    export.export_encrypter(encrypt)
+    encrypt2 = export.import_encrypter()
+
+    # print(encrypt2.encrypt(msg) == a)
+    #
+    # print(encrypt == encrypt2)
 
 

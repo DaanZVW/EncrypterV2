@@ -25,17 +25,14 @@ class ascii_scope(baseHelper):
     # Vars for the inherited model class
     name: str = field(default='helpers.ascii_scope', init=False)
 
-    # Setting which the model follows
+    # Helper variables, will be exported
     setting: asciiSetting = field(default=asciiSetting.full)
-    # Characters it will include in scope (must be within 8-bit ascii_scope)
-    extra_scope_chars: Union[None, List[str]] = field(default_factory=lambda: ['\n', '\t', ' '])
+    extra_scope_chars: Union[bytes, None] = field(default=b'\n\t ')
 
-    scope: List[str] = field(default_factory=list, init=False)
+    # Local variables, will not be exported
+    scope: bytearray = field(default_factory=bytearray, init=False)
 
     def __post_init__(self):
-        # Update the id when the object constructor is called
-        self.update_id()
-
         if self.setting in (asciiSetting.lettersAll, asciiSetting.lettersLower, asciiSetting.lettersHigher):
             def check_func(char):
                 return char.isalpha()
@@ -51,23 +48,33 @@ class ascii_scope(baseHelper):
 
         start, stop = self.setting.value
         for number in range(start, stop + 1):
-            if check_func((character := chr(number))):
-                self.scope += character
+            if check_func(chr(number)):
+                self.scope += number.to_bytes(1, 'little')
 
         if self.extra_scope_chars is not None:
             self.scope += self.extra_scope_chars
 
-    def getIndex(self, char: str) -> Union[bool, int]:
+        self.update_id()
+
+    def get_index(self, char: bytes) -> Union[bool, int]:
         try:
             return self.scope.index(char)
         except ValueError:
             raise ValueError(f"Given character '{char}' does not fit the scope '{self.setting}'")
 
-    def __export__(self) -> List[Any]:
+    @staticmethod
+    def __export__(model: 'ascii_scope') -> List[Any]:
         return [
-            self.setting.value,
-            self.extra_scope_chars
+            model.setting.value,
+            model.extra_scope_chars.decode('utf-8')
         ]
+
+    @staticmethod
+    def __import__(attributes: Any) -> 'ascii_scope':
+        return ascii_scope(
+            setting=asciiSetting(attributes[0]),
+            extra_scope_chars=attributes[1].encode('utf-8')
+        )
 
     def __len__(self):
         return len(self.scope)
@@ -75,5 +82,4 @@ class ascii_scope(baseHelper):
 
 # Standard model variables
 MAIN_MODULE = ascii_scope
-MODULE_ATTRIBUTES = [asciiSetting, list]
 

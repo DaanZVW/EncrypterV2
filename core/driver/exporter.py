@@ -2,122 +2,136 @@
 import os
 import json
 import importlib
+from typing import List
 from datetime import datetime
-from dataclasses import dataclass, field
-from typing import Dict, Any, List
+from dataclasses import field, InitVar, KW_ONLY
 
 # Drivers
-from core.driver.encrypter import encrypter
+from core.driver.encoder import *
+from core.driver.exception import *
 from core.driver.basemodel import base
-from core.driver.saver import saver
+from core.driver.encrypter import encrypter
+
+
+def file_valid(path: Union[str, None]) -> bool:
+    if path is None:
+        raise FileError(path, 'None provided')
+    elif not os.path.isfile(path):
+        raise FileError(path, 'Not found')
+    return True
 
 
 @dataclass
 class exporter:
-    save_dir: str = field(default=None)
-    model_files: Dict[str, Any] = field(default_factory=dict, init=False)
-    save_helper: saver = field(default_factory=saver, init=False)
+    save_dir: str
+    helper_dir: InitVar[str]
+    model_dir: InitVar[str]
 
-    def __post_init__(self):
-        home_path = os.environ['PYTHONPATH'].split(os.pathsep)[0]
+    file: str = field(default=None, init=False)
 
-        self.addFiles(
-            os.path.join(home_path, 'core', 'models'), home_path
-        )
-        self.addFiles(
-            os.path.join(home_path, 'core', 'helpers'), home_path
-        )
+    _paths: List[str] = field(init=False, default_factory=list, repr=False)
+    _model_info: Dict[str, Any] = field(init=False, default_factory=dict)
+    _home_path: str = field(init=False, default=os.environ['PYTHONPATH'].split(os.pathsep)[0])
+    _ = KW_ONLY
+    auto_add_models: InitVar[bool] = field(default=True)
+    auto_import_models: InitVar[bool] = field(default=True)
 
-    def addFiles(self, dir_path: str, home_path: str) -> None:
-        model_files = self.getFiles(dir_path)
+    def __post_init__(self, helper_dir: str, model_dir: str, auto_add_models: bool, auto_import_models: bool):
+        if auto_add_models:
+            helper_paths = self.get_all_files_from_dir(os.path.join(self._home_path, helper_dir))
+            model_paths = self.get_all_files_from_dir(os.path.join(self._home_path, model_dir))
+            self.add_files(*helper_paths, *model_paths)
 
-        for dir_path in model_files.keys():
-            # Get relative python import
-            py_dir_path = dir_path.removeprefix(home_path).replace(os.path.sep, '.')[1:]
+        if auto_import_models:
+            self.import_added_files()
 
-            for filename in model_files[dir_path]:
-                file_content = importlib.import_module(py_dir_path + '.' + filename.split('.')[0])
-                try:
-                    moduleID: str = file_content.MAIN_MODULE().id
-                    self.model_files[moduleID] = file_content
-                except AttributeError:
-                    print(f"File "
-                          f"'{dir_path.removeprefix(home_path)[1:]}"
-                          f"{os.path.sep}"
-                          f"{filename}'"
-                          f" cannot be imported")
+    def get_all_files_from_dir(self, directory: str):
+        root, models, _ = next(os.walk(directory))
+        models = [os.path.join(root, model) for model in models if not model.endswith('__')]
 
-    @staticmethod
-    def getFiles(dirname: str) -> Dict[str, List[str]]:
-        all_files = dict()
-
-        root, models, _ = next(os.walk(dirname))
-        models = [os.path.join(root, model) for model in models]
-
+        file_paths = []
         for model in models:
-            if model.endswith('__'):
-                continue
+            for root, _, files in os.walk(model):
+                if not root.endswith('__'):
+                    file_paths += [os.path.join(root, file) for file in files if not file.startswith('__')]
 
-            _, _, files = next(os.walk(model))
-            all_files[model] = [file for file in files if not file.startswith('__')]
+        return file_paths
 
-        return all_files
+    def add_files(self, *file_path: str) -> bool:
+        for file in file_path:
+            if file not in self._paths:
+                self._paths.append(file)
+        return True
 
-    def exportEncrypter(self, encrypt: encrypter, filename: str, overwrite: bool = False) -> bool:
-        if not isinstance(encrypt, encrypter):
-            return False
+    def import_added_files(self) -> bool:
+        for file_path in self._paths:
+            package_name = file_path.removeprefix(self._home_path).replace(os.path.sep, '.')[1:-3]
 
-        if not filename.endswith('.json'):
-            filename += '.json'
-
-        model_data = {
-            'create_date': datetime.now().isoformat(),
-            'models': encrypt.__export__()
-        }
-        model_data = json.dumps(model_data, indent=2)
-
-        return self.save_helper.write(filename, model_data, overwrite=overwrite)
-
-    def importEncrypter(self, filename: str) -> encrypter:
-        def getAttributes(converters: List[Any], values: List[Any]):
-            attrs = []
-            for convert, value in zip(converters, values):
-                if value is None:
-                    attrs.append(None)
-                elif issubclass(convert, base):
-                    if isinstance(value, list) and not isinstance(convert, list):
-                        attrs_other: List[Any] = getAttributes(
-                            [convert for _ in range(len(value))],
-                            value
-                        )
-                        attrs.append(attrs_other)
-                    else:
-                        attrs_other: List[Any] = getAttributes(
-                            self.model_files[value.get('id')].MODULE_ATTRIBUTES,
-                            value.get('attributes')
-                        )
-                        attrs.append(convert(*attrs_other))
-
+            try:
+                module = importlib.import_module(package_name)
+            except SyntaxError:
+                print(f"File '{file_path}' can't be imported ")
+            else:
+                try:
+                    module_type: Type[base] = module.MAIN_MODULE
+                except AttributeError:
+                    print(f"File '{file_path}' can't be imported!")
                 else:
-                    attrs.append(convert(value))
+                    self._model_info[file_path] = {
+                        'type': module_type
+                    }
 
-            return attrs
+                    register_encrypter_type(module_type, 1)
+        return True
 
-        if not filename.endswith('.json'):
-            filename += '.json'
+    def set_file_path(self, path: Union[str, None]) -> bool:
+        self.file = path
 
-        file_data: str = self.save_helper.read(filename)
-        file_data: Dict[str, Any] = json.loads(file_data)
+        try:
+            file_valid(path)
+        except FileError:
+            try:
+                path = os.path.join(self._home_path, path)
+                self.file = path
+                file_valid(path)
+            except FileError:
+                return False
+        return True
 
-        encrypt = encrypter()
-        model_info: List[Dict[str, Any]] = file_data.get('models')
-        for model in model_info:
-            module = self.model_files[model.get('id')]
+    def get_file_path(self) -> str:
+        return self.file
 
-            attributes = getAttributes(module.MODULE_ATTRIBUTES, model.get('attributes'))
-            initialised_model = module.MAIN_MODULE(*attributes)
+    def export_encrypter(self, obj: encrypter) -> bool:
+        try:
+            file_valid(self.file)
+        except FileError:
+            with open(self.file, 'wb'):
+                os.utime(self.file, None)
 
-            encrypt.addModel(initialised_model)
-        return encrypt
+        serializable_model = [export_model(model) for model in obj.models]
+
+        export = {
+            'date': datetime.now().isoformat(),
+            'models': serializable_model
+        }
+
+        with open(self.file, 'w') as f:
+            json.dump(export, f, indent=2)
+        return True
+
+    def import_encrypter(self) -> encrypter:
+        file_valid(self.file)
+
+        with open(self.file, 'r') as f:
+            serializable_model = json.load(f)
+
+        with raise_error(KeyError, FileError(self.file, 'Is not an encrypter file')):
+            models = serializable_model['models']
+
+        obj = encrypter()
+        for model in models:
+            obj.addModel(import_model(model))
+        return obj
+
 
 

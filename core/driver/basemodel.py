@@ -1,8 +1,23 @@
 # Library's
 from enum import Enum
-from hashlib import md5
+from hashlib import sha1
+from base64 import urlsafe_b64encode
 from dataclasses import dataclass, field
-from typing import List, Any, Union, Dict, NoReturn
+from typing import List, Any, NoReturn
+
+
+def id_algorithm(str_input: str) -> bytes:
+    """
+    Get an identifier hash of a given input
+    :param str_input: Input that needs to be hashed
+    :return: Hashed input
+    """
+    if isinstance(str_input, str):
+        str_input = str_input.encode('utf-8')
+
+    return urlsafe_b64encode(
+        sha1(str_input).digest()
+    )
 
 
 class typeInput(Enum):
@@ -29,7 +44,7 @@ class base:
     nonce: int = field(init=False, default=0)
 
     # Identifier of a base.
-    id: str = field(default=None, init=False)
+    id: bytes = field(default=None, init=False)
 
     def __post_init__(self) -> NoReturn:
         """
@@ -38,23 +53,30 @@ class base:
         """
         self.update_id()
 
-    def __export__(self) -> List[Any]:
-        """
-        Custom magic method for exporting models
-        Return all the variables needed to recreate the model
-        :return: List with values for init
-        """
-        raise TypeError("This model can't be exported")
-
     def update_id(self) -> NoReturn:
         """
         Get the ID of model by returning hash of key attributes
         :return: (HEX) Hash (md5) in string format
         """
-        combined_values = "".join(
-            [self.name, str(self.nonce)]
-        ).encode('utf-8')
-        self.id = md5(combined_values).hexdigest()
+        self.id = id_algorithm(self.name + str(self.nonce))
+
+    @staticmethod
+    def __export__(model: 'base') -> List[Any]:
+        """
+        Magic method for exporting models
+        Return all the variables needed to recreate the model
+        :return: List with values for init
+        """
+        raise TypeError("This model can't be exported")
+
+    @staticmethod
+    def __import__(attributes: List[Any]) -> 'base':
+        """
+        Magic method for importing models
+        Initialize the model with the given attributes
+        :return: Initialized model
+        """
+        raise TypeError("This model can't be imported")
 
 
 @dataclass
@@ -80,10 +102,7 @@ class baseModel(base):
         Get the ID of model by returning hash of key attributes
         :return: (HEX) Hash (md5) in string format
         """
-        combined_values = "".join(
-            [self.name, str(self.nonce), str(typeInput)]
-        ).encode('utf-8')
-        self.id = md5(combined_values).hexdigest()
+        self.id = id_algorithm(self.name + str(self.nonce) + str(typeInput))
 
     def encrypt(self, content: bytes) -> bytes:
         """
@@ -107,16 +126,5 @@ class baseModel(base):
         :param after_encryption: If the reset call has been done after the encrypt() function
         """
         pass
-
-
-def export_model(model: base) -> Union[Dict[str, Any], None]:
-    """
-    Function for exporting a model. Only should be used with the __export__() function
-    :param model: model to export
-    :return: Dict with ID and Attributes
-    """
-    if model is None:
-        return None
-    return {'id': model.id, 'attributes': model.__export__()}
 
 

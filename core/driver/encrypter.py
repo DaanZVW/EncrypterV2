@@ -1,10 +1,12 @@
 # Library's
-from typing import List, Callable, Any, Union
+from dataclasses import dataclass
+from typing import List, Callable, Union
 
 # Drivers
-from core.driver.basemodel import baseModel, typeInput, export_model
+from core.driver.basemodel import baseModel, typeInput
 
 
+@dataclass
 class encrypter:
     def __init__(self, *models: baseModel):
         self.models: List[baseModel] = list()
@@ -20,34 +22,39 @@ class encrypter:
 
     @staticmethod
     def __hidden_encrypt(
-            content: str,
+            content: bytearray,
             model: baseModel,
-            function: Callable[[baseModel, Union[str, int]], str]
-    ) -> str:
-        new_content = ''
+            function: Callable[[baseModel, Union[bytearray, int]], bytearray]
+    ) -> bytearray:
+
+        new_content = bytearray()
         if model.type == typeInput.char:
             for letter in content:
                 new_content += function(model, letter)
+
         elif model.type == typeInput.all:
             new_content += function(model, content)
+
         else:
             raise TypeError("typeInput.other is not supported yet")
+
         return new_content
 
-    def encrypt(self, content: str) -> str:
+    def encrypt(self, content: bytes) -> bytes:
+        content = bytearray(content)
+
         for model in self.models:
             content = self.__hidden_encrypt(content, model, lambda m, c: m.encrypt(c))
             model.reset(after_encryption=True)
-        return content
+        return bytes(content)
 
-    def decrypt(self, content: str) -> str:
+    def decrypt(self, content: bytes) -> bytes:
+        content = bytearray(content)
+
         for model in reversed(self.models):
             content = self.__hidden_encrypt(content, model, lambda m, c: m.decrypt(c))
             model.reset(after_encryption=False)
-        return content
-
-    def __export__(self) -> List[Any]:
-        return [export_model(model) for model in self.models]
+        return bytes(content)
 
     def __repr__(self) -> str:
         model_info = [model.__repr__() for model in self.models]
